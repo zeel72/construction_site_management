@@ -11,6 +11,9 @@ const {
   createSupplier,
   updateSupplier,
   deleteSupplier,
+  addSupplierTransaction,
+  getSupplierTransactions,
+  deleteSupplierTransaction,
 } = require('../controllers/supplierController');
 
 const protect = require('../middleware/auth');
@@ -47,6 +50,16 @@ router
     updateSupplier
   )
   .delete(authorize('admin', 'supervisor'), deleteSupplier);
+
+// Supplier transaction routes (billed/paid)
+router
+  .route('/:id/transactions')
+  .get(getSupplierTransactions)
+  .post(addSupplierTransaction);
+
+router
+  .route('/:id/transactions/:txnId')
+  .delete(deleteSupplierTransaction);
 
 module.exports = router;
 

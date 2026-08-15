@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Sites from './pages/Sites';
 import Suppliers from './pages/Suppliers';
+import SupplierDetail from './pages/SupplierDetail';
 import SiteDetail from './pages/SiteDetail';
 import Labours from './pages/Labours';
 import Attendance from './pages/Attendance';
@@ -46,6 +47,7 @@ function App() {
           <Route index element={<Navigate to="/sites" replace />} />
           <Route path="sites" element={<Sites />} />
           <Route path="suppliers" element={<Suppliers />} />
+          <Route path="suppliers/:id" element={<SupplierDetail />} />
           
           {/* Khatabook Ledger Routes */}
           <Route path="parties" element={<Parties />} />

@@ -4,6 +4,7 @@
 const Supplier = require('../models/Supplier');
 const MaterialBill = require('../models/MaterialBill');
 const Payment = require('../models/Payment');
+const SupplierTransaction = require('../models/SupplierTransaction');
 
 // @desc    Get all suppliers
 // @route   GET /api/suppliers
@@ -14,20 +15,40 @@ exports.getSuppliers = async (req, res) => {
   // Calculate dynamic totals for each supplier
   const enrichedSuppliers = await Promise.all(
     suppliers.map(async (supplier) => {
-      // 1. Total billed from all MaterialBills for this supplier
+      // 1. Total billed from MaterialBills
       const bills = await MaterialBill.aggregate([
         { $match: { supplierId: supplier._id, status: { $ne: 'cancelled' } } },
         { $group: { _id: null, total: { $sum: '$finalAmount' } } }
       ]);
-      const totalBilled = bills.length > 0 ? bills[0].total : 0;
+      const billsTotal = bills.length > 0 ? bills[0].total : 0;
 
-      // 2. Total paid from all Payments to this supplier
+      // 2. Total paid from Payments
       const payments = await Payment.aggregate([
         { $match: { referenceId: supplier._id, type: 'material' } },
         { $group: { _id: null, total: { $sum: '$amount' } } }
       ]);
-      const totalPaid = payments.length > 0 ? payments[0].total : 0;
+      const paymentsTotal = payments.length > 0 ? payments[0].total : 0;
 
+      // 3. Direct supplier transactions (billed & paid)
+      const directTxns = await SupplierTransaction.aggregate([
+        { $match: { supplierId: supplier._id } },
+        {
+          $group: {
+            _id: '$type',
+            total: { $sum: '$amount' }
+          }
+        }
+      ]);
+
+      let directBilled = 0;
+      let directPaid = 0;
+      directTxns.forEach(t => {
+        if (t._id === 'billed') directBilled = t.total;
+        if (t._id === 'paid') directPaid = t.total;
+      });
+
+      const totalBilled = billsTotal + directBilled;
+      const totalPaid = paymentsTotal + directPaid;
       const balanceDue = totalBilled - totalPaid;
 
       return {
@@ -46,7 +67,7 @@ exports.getSuppliers = async (req, res) => {
   });
 };
 
-// @desc    Get single supplier
+// @desc    Get single supplier with transactions
 // @route   GET /api/suppliers/:id
 // @access  Private
 exports.getSupplier = async (req, res) => {
@@ -58,18 +79,37 @@ exports.getSupplier = async (req, res) => {
     throw error;
   }
   
-  // Calculate dynamic totals
+  // Calculate dynamic totals from MaterialBills
   const bills = await MaterialBill.aggregate([
     { $match: { supplierId: supplier._id, status: { $ne: 'cancelled' } } },
     { $group: { _id: null, total: { $sum: '$finalAmount' } } }
   ]);
-  const totalBilled = bills.length > 0 ? bills[0].total : 0;
+  const billsTotal = bills.length > 0 ? bills[0].total : 0;
 
   const payments = await Payment.aggregate([
     { $match: { referenceId: supplier._id, type: 'material' } },
     { $group: { _id: null, total: { $sum: '$amount' } } }
   ]);
-  const totalPaid = payments.length > 0 ? payments[0].total : 0;
+  const paymentsTotal = payments.length > 0 ? payments[0].total : 0;
+
+  // Direct supplier transactions
+  const directTxns = await SupplierTransaction.aggregate([
+    { $match: { supplierId: supplier._id } },
+    { $group: { _id: '$type', total: { $sum: '$amount' } } }
+  ]);
+
+  let directBilled = 0;
+  let directPaid = 0;
+  directTxns.forEach(t => {
+    if (t._id === 'billed') directBilled = t.total;
+    if (t._id === 'paid') directPaid = t.total;
+  });
+
+  const totalBilled = billsTotal + directBilled;
+  const totalPaid = paymentsTotal + directPaid;
+
+  // Get all direct transactions for the timeline
+  const transactions = await SupplierTransaction.find({ supplierId: supplier._id }).sort({ date: -1 });
 
   res.json({
     success: true,
@@ -77,7 +117,8 @@ exports.getSupplier = async (req, res) => {
       ...supplier.toObject(),
       totalBilled,
       totalPaid,
-      balanceDue: totalBilled - totalPaid
+      balanceDue: totalBilled - totalPaid,
+      transactions
     },
   });
 };
@@ -129,10 +170,64 @@ exports.deleteSupplier = async (req, res) => {
     throw error;
   }
 
+  // Also delete all direct transactions for this supplier
+  await SupplierTransaction.deleteMany({ supplierId: supplier._id });
   await supplier.deleteOne();
 
   res.json({
     success: true,
     data: {},
   });
+};
+
+// @desc    Add a direct transaction (billed or paid) to a supplier
+// @route   POST /api/suppliers/:id/transactions
+// @access  Private
+exports.addSupplierTransaction = async (req, res) => {
+  const { amount, type, description, date } = req.body;
+
+  const supplier = await Supplier.findById(req.params.id);
+  if (!supplier) {
+    const error = new Error('Supplier not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const transaction = await SupplierTransaction.create({
+    supplierId: supplier._id,
+    userId: req.user.id,
+    amount: Number(amount),
+    type,
+    description,
+    date: date ? new Date(date) : Date.now()
+  });
+
+  res.status(201).json({ success: true, data: transaction });
+};
+
+// @desc    Get all transactions for a supplier
+// @route   GET /api/suppliers/:id/transactions
+// @access  Private
+exports.getSupplierTransactions = async (req, res) => {
+  const transactions = await SupplierTransaction.find({ supplierId: req.params.id }).sort({ date: -1 });
+  res.json({ success: true, data: transactions });
+};
+
+// @desc    Delete a supplier transaction
+// @route   DELETE /api/suppliers/:id/transactions/:txnId
+// @access  Private
+exports.deleteSupplierTransaction = async (req, res) => {
+  const transaction = await SupplierTransaction.findOne({
+    _id: req.params.txnId,
+    supplierId: req.params.id,
+  });
+
+  if (!transaction) {
+    const error = new Error('Transaction not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await transaction.deleteOne();
+  res.json({ success: true, data: {} });
 };
