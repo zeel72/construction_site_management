@@ -32,12 +32,13 @@ const app = express();
 // Security headers
 app.use(helmet());
 
-// CORS — allow frontend origin
+// CORS — allow frontend origin dynamically to support Vercel preview URLs
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production'
-      ? process.env.CLIENT_URL
-      : ['http://localhost:5173', 'http://localhost:3000'],
+    origin: function (origin, callback) {
+      // Allow any origin, reflecting it back for credentials support
+      callback(null, true);
+    },
     credentials: true,
   })
 );
