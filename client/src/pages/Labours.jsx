@@ -14,7 +14,7 @@ const Labours = () => {
   const [labours, setLabours] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Modal state
+  // Add/Edit Labour Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -23,6 +23,18 @@ const Labours = () => {
     phone: '',
     skill: 'helper',
     dailyWage: ''
+  });
+
+  // Payment Modal
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [paySubmitting, setPaySubmitting] = useState(false);
+  const [payLabourId, setPayLabourId] = useState(null);
+  const [payLabourName, setPayLabourName] = useState('');
+  const [payData, setPayData] = useState({
+    amount: '',
+    paymentDate: new Date().toISOString().split('T')[0],
+    paymentMode: 'cash',
+    notes: ''
   });
 
   useEffect(() => {
@@ -106,11 +118,53 @@ const Labours = () => {
     }
   };
 
+  // Payment Handlers
+  const openPayModal = (labour) => {
+    setPayLabourId(labour._id);
+    setPayLabourName(labour.name);
+    setPayData({ amount: '', paymentDate: new Date().toISOString().split('T')[0], paymentMode: 'cash', notes: '' });
+    setIsPayModalOpen(true);
+  };
+
+  const handlePayInputChange = (e) => {
+    setPayData({ ...payData, [e.target.id]: e.target.value });
+  };
+
+  const handleAddPayment = async (e) => {
+    e.preventDefault();
+    if (!payData.amount || payData.amount <= 0) return toast.error('Enter a valid amount');
+
+    setPaySubmitting(true);
+    try {
+      await api.post(`/sites/${siteId}/payments`, {
+        type: 'labour',
+        referenceId: payLabourId,
+        referenceName: payLabourName,
+        amount: Number(payData.amount),
+        paymentDate: payData.paymentDate,
+        paymentMode: payData.paymentMode,
+        notes: payData.notes
+      });
+      toast.success('Payment recorded successfully');
+      setIsPayModalOpen(false);
+      fetchLabours(); // Refresh to update totals
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to record payment');
+    } finally {
+      setPaySubmitting(false);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
   };
 
   if (loading) return <Spinner />;
+
+  // Summary
+  const totalEarned = labours.reduce((sum, l) => sum + (l.totalEarned || 0), 0);
+  const totalPaid = labours.reduce((sum, l) => sum + (l.totalPaid || 0), 0);
+  const totalDue = labours.reduce((sum, l) => sum + (l.balanceDue || 0), 0);
 
   return (
     <div>
@@ -123,6 +177,22 @@ const Labours = () => {
         }}>Add Labour</Button>
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid-cols-3" style={{ marginBottom: '2rem' }}>
+        <Card style={{ borderTop: '4px solid var(--primary-color)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Total Earned</p>
+          <h2 style={{ color: 'var(--text-main)' }}>{formatCurrency(totalEarned)}</h2>
+        </Card>
+        <Card style={{ borderTop: '4px solid var(--success)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Total Paid</p>
+          <h2 style={{ color: 'var(--success)' }}>{formatCurrency(totalPaid)}</h2>
+        </Card>
+        <Card style={{ borderTop: '4px solid var(--danger)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Balance Due</p>
+          <h2 style={{ color: 'var(--danger)' }}>{formatCurrency(totalDue)}</h2>
+        </Card>
+      </div>
+
       <Card noPadding>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -130,31 +200,35 @@ const Labours = () => {
               <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', background: 'var(--bg-main)' }}>
                 <th style={{ padding: '1rem' }}>Name</th>
                 <th style={{ padding: '1rem' }}>Skill</th>
-                <th style={{ padding: '1rem' }}>Phone</th>
                 <th style={{ padding: '1rem' }}>Daily Wage</th>
-                <th style={{ padding: '1rem' }}>Total Earned</th>
-                <th style={{ padding: '1rem' }}>Status</th>
+                <th style={{ padding: '1rem', textAlign: 'right' }}>Total Earned</th>
+                <th style={{ padding: '1rem', textAlign: 'right' }}>Total Paid</th>
+                <th style={{ padding: '1rem', textAlign: 'right' }}>Balance Due</th>
                 <th style={{ padding: '1rem' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {labours.map(labour => (
                 <tr key={labour._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1rem', fontWeight: '500' }}>{labour.name}</td>
-                  <td style={{ padding: '1rem', textTransform: 'capitalize' }}>{labour.skill || 'Helper'}</td>
-                  <td style={{ padding: '1rem' }}>{labour.phone || 'N/A'}</td>
+                  <td style={{ padding: '1rem', fontWeight: '500' }}>
+                    {labour.name}
+                    {labour.phone && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{labour.phone}</div>}
+                  </td>
+                  <td style={{ padding: '1rem', textTransform: 'capitalize' }}>
+                    <Badge variant="secondary">{labour.skill || 'Helper'}</Badge>
+                  </td>
                   <td style={{ padding: '1rem' }}>{formatCurrency(labour.dailyWage)}</td>
-                  <td style={{ padding: '1rem', fontWeight: '600', color: 'var(--success)' }}>
-                    {formatCurrency(labour.totalEarned || 0)}
+                  <td style={{ padding: '1rem', textAlign: 'right' }}>{formatCurrency(labour.totalEarned || 0)}</td>
+                  <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--success)' }}>{formatCurrency(labour.totalPaid || 0)}</td>
+                  <td style={{ padding: '1rem', textAlign: 'right', color: (labour.balanceDue || 0) > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 'bold' }}>
+                    {formatCurrency(labour.balanceDue || 0)}
                   </td>
                   <td style={{ padding: '1rem' }}>
-                    <Badge variant={labour.isActive ? 'success' : 'secondary'}>
-                      {labour.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </td>
-                  <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
-                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(labour)}>Edit</Button>
-                    <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteLabour(labour._id)}>Delete</Button>
+                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                      <Button variant="ghost" size="sm" style={{ color: 'var(--success)', fontSize: '0.75rem' }} onClick={() => openPayModal(labour)}>₹ Pay</Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditClick(labour)}>Edit</Button>
+                      <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteLabour(labour._id)}>Del</Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -170,6 +244,7 @@ const Labours = () => {
         </div>
       </Card>
 
+      {/* Add/Edit Labour Modal */}
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
@@ -199,6 +274,45 @@ const Labours = () => {
             </Input>
             <Input label="Daily Wage (₹)" id="dailyWage" type="number" min="0" value={formData.dailyWage} onChange={handleInputChange} required />
           </div>
+        </form>
+      </Modal>
+
+      {/* Payment Modal */}
+      <Modal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        title={`💰 Pay ${payLabourName}`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsPayModalOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleAddPayment} 
+              isLoading={paySubmitting}
+              style={{ backgroundColor: 'var(--success)', borderColor: 'var(--success)' }}
+            >
+              Record Payment
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleAddPayment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <Input 
+            label="Amount (₹)" 
+            id="amount" 
+            type="number" 
+            min="1" 
+            value={payData.amount} 
+            onChange={handlePayInputChange} 
+            required 
+          />
+          <Input label="Payment Date" id="paymentDate" type="date" value={payData.paymentDate} onChange={handlePayInputChange} required />
+          <Input label="Payment Mode" id="paymentMode" type="select" value={payData.paymentMode} onChange={handlePayInputChange}>
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="bank_transfer">Bank Transfer</option>
+            <option value="cheque">Cheque</option>
+          </Input>
+          <Input label="Notes (Optional)" id="notes" value={payData.notes} onChange={handlePayInputChange} />
         </form>
       </Modal>
     </div>
