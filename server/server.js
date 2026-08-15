@@ -88,6 +88,9 @@ app.use('/api/sites', require('./routes/siteRoutes'));
 // Supplier routes (global — not site-scoped)
 app.use('/api/suppliers', require('./routes/supplierRoutes'));
 
+// Party / Khatabook routes
+app.use('/api/parties', require('./routes/partyRoutes'));
+
 // ============================================
 // 404 Handler
 // ============================================

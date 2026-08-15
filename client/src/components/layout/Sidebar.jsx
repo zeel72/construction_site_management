@@ -10,6 +10,7 @@ const Sidebar = ({ siteId, onClose }) => {
   const globalLinks = [
     { to: '/sites', icon: <FiMap />, label: 'All Sites' },
     { to: '/suppliers', icon: <FiTruck />, label: 'Suppliers' },
+    { to: '/parties', icon: <FiUsers />, label: 'Ledger (Khatabook)' },
   ];
 
   const siteLinks = siteId ? [

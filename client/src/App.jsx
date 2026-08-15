@@ -15,6 +15,8 @@ import Attendance from './pages/Attendance';
 import Materials from './pages/Materials';
 import MaterialBills from './pages/MaterialBills';
 import Payments from './pages/Payments';
+import Parties from './pages/Parties';
+import PartyDetail from './pages/PartyDetail';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -44,6 +46,10 @@ function App() {
           <Route index element={<Navigate to="/sites" replace />} />
           <Route path="sites" element={<Sites />} />
           <Route path="suppliers" element={<Suppliers />} />
+          
+          {/* Khatabook Ledger Routes */}
+          <Route path="parties" element={<Parties />} />
+          <Route path="parties/:id" element={<PartyDetail />} />
           
           {/* Site-specific routes */}
           <Route path="sites/:siteId">
