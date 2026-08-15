@@ -7,7 +7,7 @@ const Site = require('../models/Site');
 // @route   GET /api/sites
 // @access  Private
 exports.getSites = async (req, res) => {
-  const query = {};
+  const query = { createdBy: req.user.id };
   if (req.query.status) query.status = req.query.status;
 
   const sites = await Site.find(query).sort({ createdAt: -1 });

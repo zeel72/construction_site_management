@@ -34,3 +34,52 @@ exports.addMaterial = async (req, res) => {
     data: material,
   });
 };
+
+// @desc    Update material
+// @route   PUT /api/sites/:siteId/materials/:id
+// @access  Private
+exports.updateMaterial = async (req, res) => {
+  let material = await Material.findOne({
+    _id: req.params.id,
+    siteId: req.params.siteId,
+  });
+
+  if (!material) {
+    const error = new Error('Material not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  material = await Material.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.json({
+    success: true,
+    data: material,
+  });
+};
+
+// @desc    Delete material
+// @route   DELETE /api/sites/:siteId/materials/:id
+// @access  Private
+exports.deleteMaterial = async (req, res) => {
+  const material = await Material.findOne({
+    _id: req.params.id,
+    siteId: req.params.siteId,
+  });
+
+  if (!material) {
+    const error = new Error('Material not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await material.deleteOne();
+
+  res.json({
+    success: true,
+    data: {},
+  });
+};

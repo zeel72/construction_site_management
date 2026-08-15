@@ -108,3 +108,26 @@ exports.updateLabour = async (req, res) => {
     data: labour,
   });
 };
+
+// @desc    Delete labour
+// @route   DELETE /api/sites/:siteId/labours/:id
+// @access  Private
+exports.deleteLabour = async (req, res) => {
+  const labour = await Labour.findOne({
+    _id: req.params.id,
+    siteId: req.params.siteId,
+  });
+
+  if (!labour) {
+    const error = new Error('Labour not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await labour.deleteOne();
+
+  res.json({
+    success: true,
+    data: {},
+  });
+};

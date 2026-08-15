@@ -116,3 +116,23 @@ exports.updateSupplier = async (req, res) => {
     data: supplier,
   });
 };
+
+// @desc    Delete supplier
+// @route   DELETE /api/suppliers/:id
+// @access  Private (Admin only)
+exports.deleteSupplier = async (req, res) => {
+  const supplier = await Supplier.findById(req.params.id);
+
+  if (!supplier) {
+    const error = new Error('Supplier not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await supplier.deleteOne();
+
+  res.json({
+    success: true,
+    data: {},
+  });
+};

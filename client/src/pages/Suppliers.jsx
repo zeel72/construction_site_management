@@ -15,6 +15,7 @@ const Suppliers = () => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     contactPerson: '',
@@ -47,22 +48,55 @@ const Suppliers = () => {
 
   const handleAddSupplier = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) {
-      return toast.error('Company Name and Phone are required');
+    if (!formData.name || !formData.phone || !formData.state) {
+      return toast.error('Company Name, Phone, and State are required');
     }
 
     setSubmitting(true);
     try {
-      await api.post('/suppliers', formData);
-      toast.success('Supplier added successfully');
+      if (editingId) {
+        await api.put(`/suppliers/${editingId}`, formData);
+        toast.success('Supplier updated successfully');
+      } else {
+        await api.post('/suppliers', formData);
+        toast.success('Supplier added successfully');
+      }
+
       setIsModalOpen(false);
+      setEditingId(null);
       setFormData({ name: '', contactPerson: '', phone: '', email: '', gstin: '', address: '', state: '' });
       fetchSuppliers();
     } catch (error) {
-      const msg = error.response?.data?.error || 'Failed to add supplier';
+      const msg = error.response?.data?.error || (editingId ? 'Failed to update supplier' : 'Failed to add supplier');
       toast.error(msg);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEditClick = (supplier) => {
+    setFormData({
+      name: supplier.name,
+      contactPerson: supplier.contactPerson || '',
+      phone: supplier.phone || '',
+      email: supplier.email || '',
+      gstin: supplier.gstin || '',
+      address: supplier.address || '',
+      state: supplier.state || ''
+    });
+    setEditingId(supplier._id);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteSupplier = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this supplier? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/suppliers/${id}`);
+      toast.success('Supplier deleted successfully');
+      fetchSuppliers();
+    } catch (error) {
+      console.error('Failed to delete supplier', error);
+      toast.error('Failed to delete supplier');
     }
   };
 
@@ -76,7 +110,11 @@ const Suppliers = () => {
     <div>
       <div className="flex-between" style={{ marginBottom: '2rem' }}>
         <h2>Material Suppliers</h2>
-        <Button onClick={() => setIsModalOpen(true)}>Add Supplier</Button>
+        <Button onClick={() => {
+          setEditingId(null);
+          setFormData({ name: '', contactPerson: '', phone: '', email: '', gstin: '', address: '', state: '' });
+          setIsModalOpen(true);
+        }}>Add Supplier</Button>
       </div>
 
       <Card noPadding>
@@ -91,6 +129,7 @@ const Suppliers = () => {
                 <th style={{ padding: '1rem' }}>Total Paid</th>
                 <th style={{ padding: '1rem' }}>Balance Due</th>
                 <th style={{ padding: '1rem' }}>Status</th>
+                <th style={{ padding: '1rem' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -113,11 +152,15 @@ const Suppliers = () => {
                       {supplier.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </td>
+                  <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
+                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(supplier)}>Edit</Button>
+                    <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteSupplier(supplier._id)}>Delete</Button>
+                  </td>
                 </tr>
               ))}
               {suppliers.length === 0 && (
                 <tr>
-                  <td colSpan="7" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
+                  <td colSpan="8" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
                     No suppliers found.
                   </td>
                 </tr>
@@ -130,11 +173,13 @@ const Suppliers = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Add New Supplier"
+        title={editingId ? "Edit Supplier" : "Add New Supplier"}
         footer={
           <>
             <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddSupplier} isLoading={submitting}>Save Supplier</Button>
+            <Button onClick={handleAddSupplier} isLoading={submitting}>
+              {editingId ? "Save Changes" : "Save Supplier"}
+            </Button>
           </>
         }
       >
@@ -152,7 +197,7 @@ const Suppliers = () => {
           </div>
 
           <Input label="Address" id="address" value={formData.address} onChange={handleInputChange} />
-          <Input label="State (Required for GST Calc)" id="state" value={formData.state} onChange={handleInputChange} placeholder="e.g. Maharashtra" />
+          <Input label="State (Required for GST Calc)" id="state" value={formData.state} onChange={handleInputChange} placeholder="e.g. Maharashtra" required />
         </form>
       </Modal>
 

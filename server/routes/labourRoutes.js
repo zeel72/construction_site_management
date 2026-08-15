@@ -12,6 +12,7 @@ const {
   getLabour,
   addLabour,
   updateLabour,
+  deleteLabour,
 } = require('../controllers/labourController');
 
 const protect = require('../middleware/auth');
@@ -34,6 +35,7 @@ router
 router
   .route('/:id')
   .get(getLabour)
-  .put(updateLabour);
+  .put(updateLabour)
+  .delete(deleteLabour);
 
 module.exports = router;

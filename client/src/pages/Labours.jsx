@@ -17,6 +17,7 @@ const Labours = () => {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -62,16 +63,46 @@ const Labours = () => {
         payload.phone = formData.phone.trim();
       }
 
-      await api.post(`/sites/${siteId}/labours`, payload);
-      toast.success('Labour added successfully');
+      if (editingId) {
+        await api.put(`/sites/${siteId}/labours/${editingId}`, payload);
+        toast.success('Labour updated successfully');
+      } else {
+        await api.post(`/sites/${siteId}/labours`, payload);
+        toast.success('Labour added successfully');
+      }
+
       setIsModalOpen(false);
+      setEditingId(null);
       setFormData({ name: '', phone: '', skill: 'helper', dailyWage: '' });
-      fetchLabours(); // Refresh list
+      fetchLabours();
     } catch (error) {
-      const msg = error.response?.data?.error || 'Failed to add labour';
+      const msg = error.response?.data?.error || (editingId ? 'Failed to update labour' : 'Failed to add labour');
       toast.error(msg);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEditClick = (labour) => {
+    setFormData({
+      name: labour.name,
+      phone: labour.phone || '',
+      skill: labour.skill || 'helper',
+      dailyWage: labour.dailyWage
+    });
+    setEditingId(labour._id);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteLabour = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this labourer?')) return;
+    try {
+      await api.delete(`/sites/${siteId}/labours/${id}`);
+      toast.success('Labour deleted successfully');
+      fetchLabours();
+    } catch (error) {
+      console.error('Failed to delete labour', error);
+      toast.error('Failed to delete labour');
     }
   };
 
@@ -85,7 +116,11 @@ const Labours = () => {
     <div>
       <div className="flex-between" style={{ marginBottom: '2rem' }}>
         <h2>Labour Management</h2>
-        <Button onClick={() => setIsModalOpen(true)}>Add Labour</Button>
+        <Button onClick={() => {
+          setEditingId(null);
+          setFormData({ name: '', phone: '', skill: 'helper', dailyWage: '' });
+          setIsModalOpen(true);
+        }}>Add Labour</Button>
       </div>
 
       <Card noPadding>
@@ -117,8 +152,9 @@ const Labours = () => {
                       {labour.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </td>
-                  <td style={{ padding: '1rem' }}>
-                    <Button variant="ghost" size="sm">View</Button>
+                  <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
+                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(labour)}>Edit</Button>
+                    <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteLabour(labour._id)}>Delete</Button>
                   </td>
                 </tr>
               ))}
@@ -137,11 +173,13 @@ const Labours = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Add New Labour"
+        title={editingId ? "Edit Labour" : "Add New Labour"}
         footer={
           <>
             <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddLabour} isLoading={submitting}>Save Labour</Button>
+            <Button onClick={handleAddLabour} isLoading={submitting}>
+              {editingId ? "Save Changes" : "Save Labour"}
+            </Button>
           </>
         }
       >

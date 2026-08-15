@@ -5,7 +5,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router({ mergeParams: true });
 
-const { getMaterials, addMaterial } = require('../controllers/materialController');
+const { getMaterials, addMaterial, updateMaterial, deleteMaterial } = require('../controllers/materialController');
 const protect = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
@@ -25,5 +25,10 @@ router
     validate,
     addMaterial
   );
+
+router
+  .route('/:id')
+  .put(updateMaterial)
+  .delete(deleteMaterial);
 
 module.exports = router;
