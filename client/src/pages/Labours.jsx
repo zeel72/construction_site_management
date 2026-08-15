@@ -162,9 +162,7 @@ const Labours = () => {
   if (loading) return <Spinner />;
 
   // Summary
-  const totalEarned = labours.reduce((sum, l) => sum + (l.totalEarned || 0), 0);
-  const totalPaid = labours.reduce((sum, l) => sum + (l.totalPaid || 0), 0);
-  const totalDue = labours.reduce((sum, l) => sum + (l.balanceDue || 0), 0);
+  const totalUpad = labours.reduce((sum, l) => sum + (l.totalPaid || 0), 0);
 
   return (
     <div>
@@ -178,18 +176,14 @@ const Labours = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid-cols-3" style={{ marginBottom: '2rem' }}>
-        <Card style={{ borderTop: '4px solid var(--primary-color)' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Total Earned</p>
-          <h2 style={{ color: 'var(--text-main)' }}>{formatCurrency(totalEarned)}</h2>
-        </Card>
+      <div className="grid-cols-2" style={{ marginBottom: '2rem' }}>
         <Card style={{ borderTop: '4px solid var(--success)' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Total Paid</p>
-          <h2 style={{ color: 'var(--success)' }}>{formatCurrency(totalPaid)}</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Total Upad (Advance Given)</p>
+          <h2 style={{ color: 'var(--success)' }}>{formatCurrency(totalUpad)}</h2>
         </Card>
-        <Card style={{ borderTop: '4px solid var(--danger)' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Balance Due</p>
-          <h2 style={{ color: 'var(--danger)' }}>{formatCurrency(totalDue)}</h2>
+        <Card style={{ borderTop: '4px solid var(--primary-color)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Total Labours</p>
+          <h2 style={{ color: 'var(--text-main)' }}>{labours.length}</h2>
         </Card>
       </div>
 
@@ -200,10 +194,7 @@ const Labours = () => {
               <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', background: 'var(--bg-main)' }}>
                 <th style={{ padding: '1rem' }}>Name</th>
                 <th style={{ padding: '1rem' }}>Skill</th>
-                <th style={{ padding: '1rem' }}>Daily Wage</th>
-                <th style={{ padding: '1rem', textAlign: 'right' }}>Total Earned</th>
-                <th style={{ padding: '1rem', textAlign: 'right' }}>Total Paid</th>
-                <th style={{ padding: '1rem', textAlign: 'right' }}>Balance Due</th>
+                <th style={{ padding: '1rem', textAlign: 'right' }}>Upad (Advance)</th>
                 <th style={{ padding: '1rem' }}>Actions</th>
               </tr>
             </thead>
@@ -217,15 +208,12 @@ const Labours = () => {
                   <td style={{ padding: '1rem', textTransform: 'capitalize' }}>
                     <Badge variant="secondary">{labour.skill || 'Helper'}</Badge>
                   </td>
-                  <td style={{ padding: '1rem' }}>{formatCurrency(labour.dailyWage)}</td>
-                  <td style={{ padding: '1rem', textAlign: 'right' }}>{formatCurrency(labour.totalEarned || 0)}</td>
-                  <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--success)' }}>{formatCurrency(labour.totalPaid || 0)}</td>
-                  <td style={{ padding: '1rem', textAlign: 'right', color: (labour.balanceDue || 0) > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: 'bold' }}>
-                    {formatCurrency(labour.balanceDue || 0)}
+                  <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--success)', fontWeight: '600', fontSize: '1.1rem' }}>
+                    {formatCurrency(labour.totalPaid || 0)}
                   </td>
                   <td style={{ padding: '1rem' }}>
                     <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                      <Button variant="ghost" size="sm" style={{ color: 'var(--success)', fontSize: '0.75rem' }} onClick={() => openPayModal(labour)}>₹ Pay</Button>
+                      <Button variant="ghost" size="sm" style={{ color: 'var(--success)', fontSize: '0.75rem' }} onClick={() => openPayModal(labour)}>+ Upad</Button>
                       <Button variant="ghost" size="sm" onClick={() => handleEditClick(labour)}>Edit</Button>
                       <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteLabour(labour._id)}>Del</Button>
                     </div>
@@ -234,7 +222,7 @@ const Labours = () => {
               ))}
               {labours.length === 0 && (
                 <tr>
-                  <td colSpan="7" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
+                  <td colSpan="4" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
                     No labours found for this site.
                   </td>
                 </tr>
