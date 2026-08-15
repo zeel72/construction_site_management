@@ -13,7 +13,7 @@ const Layout = () => {
   return (
     <div className="app-container">
       <div className={`sidebar-container ${sidebarOpen ? 'open' : ''}`}>
-        <Sidebar siteId={siteId} />
+        <Sidebar siteId={siteId} onClose={() => setSidebarOpen(false)} />
       </div>
       
       {/* Overlay for mobile */}

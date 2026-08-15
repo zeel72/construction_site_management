@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { FiHome, FiMap, FiUsers, FiBox, FiFileText, FiTruck, FiDollarSign } from 'react-icons/fi';
 import './layout.css';
 
-const Sidebar = ({ siteId }) => {
+const Sidebar = ({ siteId, onClose }) => {
   const { user } = useAuth();
 
   const globalLinks = [
@@ -35,6 +35,7 @@ const Sidebar = ({ siteId }) => {
               to={link.to}
               className={({ isActive }) => `nav-link ${isActive && !siteId ? 'active' : ''}`}
               end={link.to === '/'}
+              onClick={onClose}
             >
               {link.icon} <span>{link.label}</span>
             </NavLink>
@@ -50,6 +51,7 @@ const Sidebar = ({ siteId }) => {
                 to={link.to}
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                 end={link.end}
+                onClick={onClose}
               >
                 {link.icon} <span>{link.label}</span>
               </NavLink>
