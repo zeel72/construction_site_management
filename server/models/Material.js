@@ -31,11 +31,10 @@ const materialSchema = new mongoose.Schema(
 );
 
 // Pre-save hook to auto-calculate totalAmount
-materialSchema.pre('save', function (next) {
+materialSchema.pre('save', function () {
   if (this.isModified('quantity') || this.isModified('ratePerUnit')) {
     this.totalAmount = (this.quantity || 0) * (this.ratePerUnit || 0);
   }
-  next();
 });
 
 materialSchema.index({ siteId: 1 });

@@ -69,7 +69,7 @@ materialBillSchema.virtual('balanceAmount').get(function () {
 });
 
 // Pre-save hook to calculate GST and totals
-materialBillSchema.pre('save', function (next) {
+materialBillSchema.pre('save', function () {
   // Always auto-calculate amount for each item
   if (this.items && this.items.length > 0) {
     this.items.forEach(item => {
@@ -99,8 +99,6 @@ materialBillSchema.pre('save', function (next) {
       this.status = 'pending';
     }
   }
-
-  next();
 });
 
 materialBillSchema.index({ siteId: 1 });
