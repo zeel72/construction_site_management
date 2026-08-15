@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../api/api';
 import Spinner from '../components/common/Spinner';
 import Card from '../components/common/Card';
@@ -26,6 +27,7 @@ const SiteDetail = () => {
       setSummary(summaryRes.data.data);
     } catch (error) {
       console.error('Failed to fetch site details', error);
+      toast.error('Failed to load project details. Please try again.');
     } finally {
       setLoading(false);
     }

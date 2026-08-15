@@ -23,6 +23,13 @@ exports.getSites = async (req, res) => {
 // @route   GET /api/sites/:id
 // @access  Private
 exports.getSite = async (req, res) => {
+  const mongoose = require('mongoose');
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    const error = new Error('Site not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
   const site = await Site.findById(req.params.id);
 
   if (!site) {

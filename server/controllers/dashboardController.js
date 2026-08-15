@@ -13,6 +13,10 @@ const Payment = require('../models/Payment');
 // @route   GET /api/sites/:siteId/dashboard
 // @access  Private
 exports.getDashboardSummary = async (req, res) => {
+  const mongoose = require('mongoose');
+  if (!mongoose.Types.ObjectId.isValid(req.params.siteId)) {
+    return res.status(404).json({ success: false, error: 'Site not found' });
+  }
   const siteId = new mongoose.Types.ObjectId(req.params.siteId);
 
   // 1. Active Labours Count
