@@ -84,6 +84,7 @@ const PartyDetail = () => {
   };
 
   if (loading) return <Spinner />;
+  if (!data.party) return null;
 
   const { party, transactions, balance, totalAccruedInterest } = data;
 
