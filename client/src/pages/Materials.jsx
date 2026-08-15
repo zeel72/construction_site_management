@@ -16,6 +16,8 @@ const Materials = () => {
   const [loading, setLoading] = useState(true);
 
   // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
