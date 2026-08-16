@@ -12,6 +12,8 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
 const path = require('path');
+const https = require('https');
+const http = require('http');
 
 // Load environment variables
 dotenv.config();
@@ -130,5 +132,22 @@ startServer().catch((err) => {
   console.error('Failed to start server:', err);
   process.exit(1);
 });
+
+// ============================================
+// Keep-Alive Self-Ping (Render Free Tier)
+// ============================================
+// Pings the /api/health endpoint every 14 minutes to prevent the server from sleeping.
+setInterval(() => {
+  const url = process.env.RENDER_EXTERNAL_URL;
+  if (url) {
+    console.log(`[Keep-Alive] Pinging self at ${url}/api/health...`);
+    const client = url.startsWith('https') ? https : http;
+    client.get(`${url}/api/health`, (res) => {
+      console.log(`[Keep-Alive] Status: ${res.statusCode}`);
+    }).on('error', (err) => {
+      console.error(`[Keep-Alive] Failed to ping:`, err.message);
+    });
+  }
+}, 14 * 60 * 1000); // 14 minutes
 
 module.exports = app;
