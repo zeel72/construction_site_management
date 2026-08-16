@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
+import AttachmentSection from '../components/common/AttachmentSection';
 
 const MaterialBills = () => {
   const { siteId } = useParams();
@@ -157,9 +158,12 @@ const MaterialBills = () => {
                   </td>
                   <td style={{ padding: '1rem', color: 'var(--success)' }}>{formatCurrency(bill.paidAmount)}</td>
                   <td style={{ padding: '1rem' }}>
-                    <Badge variant={getStatusColor(bill.status)}>
-                      {bill.status.replace('_', ' ')}
-                    </Badge>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <Badge variant={getStatusColor(bill.status)}>
+                        {bill.status.replace('_', ' ')}
+                      </Badge>
+                      <AttachmentSection entityType="bill" entityId={bill._id} compact />
+                    </div>
                   </td>
                 </tr>
               ))}

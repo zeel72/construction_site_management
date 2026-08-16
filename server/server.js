@@ -91,6 +91,9 @@ app.use('/api/suppliers', require('./routes/supplierRoutes'));
 // Party / Khatabook routes
 app.use('/api/parties', require('./routes/partyRoutes'));
 
+// Attachment routes (universal file uploads)
+app.use('/api/attachments', require('./routes/attachmentRoutes'));
+
 // ============================================
 // 404 Handler
 // ============================================

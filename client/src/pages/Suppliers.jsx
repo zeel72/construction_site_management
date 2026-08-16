@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
+import AttachmentSection from '../components/common/AttachmentSection';
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -213,9 +214,10 @@ const Suppliers = () => {
                   <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--success)' }}>{formatCurrency(supplier.totalPaid || 0)}</td>
                   <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--danger)', fontWeight: 'bold' }}>{formatCurrency(supplier.balanceDue || 0)}</td>
                   <td style={{ padding: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
                       <Button variant="ghost" size="sm" style={{ color: 'var(--danger)', fontSize: '0.75rem' }} onClick={() => openTxnModal(supplier, 'billed')}>+ Bill</Button>
                       <Button variant="ghost" size="sm" style={{ color: 'var(--success)', fontSize: '0.75rem' }} onClick={() => openTxnModal(supplier, 'paid')}>+ Pay</Button>
+                      <AttachmentSection entityType="supplier" entityId={supplier._id} compact />
                       <Button variant="ghost" size="sm" onClick={() => handleEditClick(supplier)}>Edit</Button>
                       <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteSupplier(supplier._id)}>Del</Button>
                     </div>

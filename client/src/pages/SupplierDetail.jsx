@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
+import AttachmentSection from '../components/common/AttachmentSection';
 import { FiArrowLeft, FiTrash2 } from 'react-icons/fi';
 
 const SupplierDetail = () => {
@@ -184,6 +185,9 @@ const SupplierDetail = () => {
           </table>
         </div>
       </Card>
+
+      {/* Attachments Section */}
+      {supplier && <AttachmentSection entityType="supplier" entityId={supplier._id} />}
 
       {/* Transaction Modal */}
       <Modal 

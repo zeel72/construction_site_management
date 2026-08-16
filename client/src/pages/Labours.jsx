@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
+import AttachmentSection from '../components/common/AttachmentSection';
 
 const Labours = () => {
   const { siteId } = useParams();
@@ -212,8 +213,9 @@ const Labours = () => {
                     {formatCurrency(labour.totalPaid || 0)}
                   </td>
                   <td style={{ padding: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
                       <Button variant="ghost" size="sm" style={{ color: 'var(--success)', fontSize: '0.75rem' }} onClick={() => openPayModal(labour)}>+ Upad</Button>
+                      <AttachmentSection entityType="labour" entityId={labour._id} compact />
                       <Button variant="ghost" size="sm" onClick={() => handleEditClick(labour)}>Edit</Button>
                       <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteLabour(labour._id)}>Del</Button>
                     </div>

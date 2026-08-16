@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
+import AttachmentSection from '../components/common/AttachmentSection';
 
 const Materials = () => {
   const { siteId } = useParams();
@@ -174,9 +175,12 @@ const Materials = () => {
                   <td style={{ padding: '1rem' }}>{mat.quantity} {mat.unit}</td>
                   <td style={{ padding: '1rem', color: 'var(--success)' }}>{formatCurrency(mat.totalAmount)}</td>
                   <td style={{ padding: '1rem' }}>{new Date(mat.receivedDate).toLocaleDateString()}</td>
-                  <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
-                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(mat)}>Edit</Button>
-                    <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteMaterial(mat._id)}>Delete</Button>
+                  <td style={{ padding: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <AttachmentSection entityType="material" entityId={mat._id} compact />
+                      <Button variant="ghost" size="sm" onClick={() => handleEditClick(mat)}>Edit</Button>
+                      <Button variant="ghost" size="sm" style={{ color: 'var(--danger)' }} onClick={() => handleDeleteMaterial(mat._id)}>Delete</Button>
+                    </div>
                   </td>
                 </tr>
               ))}

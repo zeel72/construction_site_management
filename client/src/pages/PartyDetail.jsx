@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
+import AttachmentSection from '../components/common/AttachmentSection';
 import { FiArrowLeft, FiPlus, FiMinus, FiTrash2 } from 'react-icons/fi';
 
 const PartyDetail = () => {
@@ -202,6 +203,9 @@ const PartyDetail = () => {
           </table>
         </div>
       </Card>
+
+      {/* Attachments Section */}
+      {party && <AttachmentSection entityType="party" entityId={party._id} />}
 
       <Modal 
         isOpen={isModalOpen} 
