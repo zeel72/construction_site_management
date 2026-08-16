@@ -119,6 +119,19 @@ const Parties = () => {
     setIsModalOpen(true);
   };
 
+  const handleDeleteClick = async (e, partyId) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this ledger? All transactions will be deleted as well.')) {
+      try {
+        await api.delete(`/parties/${partyId}`);
+        toast.success('Ledger deleted successfully');
+        fetchParties();
+      } catch (error) {
+        toast.error('Failed to delete ledger');
+      }
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Math.abs(amount));
   };
@@ -206,7 +219,10 @@ const Parties = () => {
                     ) : '-'}
                   </td>
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
-                    <Button variant="ghost" size="sm" onClick={(e) => handleEditClick(e, party)}>Edit</Button>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                      <Button variant="ghost" size="sm" onClick={(e) => handleEditClick(e, party)}>Edit</Button>
+                      <Button variant="danger" size="sm" onClick={(e) => handleDeleteClick(e, party._id)}>Delete</Button>
+                    </div>
                   </td>
                 </tr>
               ))}
