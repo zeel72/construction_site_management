@@ -24,6 +24,7 @@ const materialRouter = require('./materialRoutes');
 const materialBillRouter = require('./materialBillRoutes');
 const paymentRouter = require('./paymentRoutes');
 const dashboardRouter = require('./dashboardRoutes');
+const reportRouter = require('./reportRoutes');
 
 // All routes require authentication
 router.use(protect);
@@ -35,6 +36,7 @@ router.use('/:siteId/materials', materialRouter);
 router.use('/:siteId/material-bills', materialBillRouter);
 router.use('/:siteId/payments', paymentRouter);
 router.use('/:siteId/dashboard', dashboardRouter);
+router.use('/:siteId/reports', reportRouter);
 
 router
   .route('/')

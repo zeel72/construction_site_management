@@ -8,6 +8,8 @@ import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
+import { generateFinancialReportPDF } from '../utils/generateReportPDF';
+import { FiDownload } from 'react-icons/fi';
 
 const Payments = () => {
   const { siteId } = useParams();
@@ -15,6 +17,7 @@ const Payments = () => {
   const [labours, setLabours] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,6 +90,27 @@ const Payments = () => {
     }
   };
 
+  const handleDownloadReport = async () => {
+    setGeneratingReport(true);
+    try {
+      // Get the site name
+      const siteRes = await api.get(`/sites/${siteId}`);
+      const siteName = siteRes.data.data.name;
+
+      // Get the report data
+      const reportRes = await api.get(`/sites/${siteId}/reports/financial`);
+      
+      // Generate the PDF
+      generateFinancialReportPDF(reportRes.data.data, siteName);
+      toast.success('Report downloaded successfully');
+    } catch (error) {
+      console.error('Failed to generate report', error);
+      toast.error('Failed to generate report');
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
   };
@@ -97,7 +121,17 @@ const Payments = () => {
     <div>
       <div className="flex-between" style={{ marginBottom: '2rem' }}>
         <h2>Payment Records</h2>
-        <Button onClick={() => setIsModalOpen(true)}>Record Payment</Button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <Button 
+            variant="secondary" 
+            onClick={handleDownloadReport} 
+            isLoading={generatingReport}
+            style={{ borderColor: 'var(--border-color)', background: 'white' }}
+          >
+            <FiDownload style={{ marginRight: '0.5rem' }} /> Site Report (PDF)
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)}>Record Payment</Button>
+        </div>
       </div>
 
       <Card noPadding>
