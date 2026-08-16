@@ -18,6 +18,8 @@ const Payments = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [activeTab, setActiveTab] = useState('balances');
+  const [reportData, setReportData] = useState(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,11 +39,16 @@ const Payments = () => {
   }, [siteId]);
 
   const fetchPayments = async () => {
+    setLoading(true);
     try {
-      const res = await api.get(`/sites/${siteId}/payments`);
-      setPayments(res.data.data);
+      const [paymentsRes, reportRes] = await Promise.all([
+        api.get(`/sites/${siteId}/payments`),
+        api.get(`/sites/${siteId}/reports/financial`)
+      ]);
+      setPayments(paymentsRes.data.data);
+      setReportData(reportRes.data.data);
     } catch (error) {
-      console.error('Failed to fetch payments', error);
+      console.error('Failed to fetch payments data', error);
     } finally {
       setLoading(false);
     }
@@ -120,7 +127,7 @@ const Payments = () => {
   return (
     <div>
       <div className="flex-between" style={{ marginBottom: '2rem' }}>
-        <h2>Payment Records</h2>
+        <h2>Site Financials (Khatabook)</h2>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <Button 
             variant="secondary" 
@@ -134,52 +141,157 @@ const Payments = () => {
         </div>
       </div>
 
-      <Card noPadding>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', background: 'var(--bg-main)' }}>
-                <th style={{ padding: '1rem' }}>Date</th>
-                <th style={{ padding: '1rem' }}>Type</th>
-                <th style={{ padding: '1rem' }}>Paid To</th>
-                <th style={{ padding: '1rem' }}>Amount</th>
-                <th style={{ padding: '1rem' }}>Mode</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map(payment => (
-                <tr key={payment._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1rem' }}>{new Date(payment.paymentDate).toLocaleDateString()}</td>
-                  <td style={{ padding: '1rem', textTransform: 'capitalize' }}>
-                    <Badge variant={payment.type === 'labour' ? 'warning' : 'info'}>
-                      {payment.type}
-                    </Badge>
-                  </td>
-                  <td style={{ padding: '1rem', fontWeight: '500' }}>{payment.referenceName || 'Unknown'}</td>
-                  <td style={{ padding: '1rem', color: 'var(--success)', fontWeight: 'bold' }}>
-                    {formatCurrency(payment.amount)}
-                  </td>
-                  <td style={{ padding: '1rem', textTransform: 'capitalize' }}>
-                    {payment.paymentMode.replace('_', ' ')}
-                    {payment.transactionId && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Txn: {payment.transactionId}
-                      </div>
-                    )}
-                  </td>
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => setActiveTab('balances')}
+          style={{
+            padding: '0.75rem 1rem',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'balances' ? '2px solid var(--primary-color)' : '2px solid transparent',
+            color: activeTab === 'balances' ? 'var(--primary-color)' : 'var(--text-muted)',
+            fontWeight: activeTab === 'balances' ? '600' : '500',
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Customer List (Balances)
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          style={{
+            padding: '0.75rem 1rem',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'history' ? '2px solid var(--primary-color)' : '2px solid transparent',
+            color: activeTab === 'history' ? 'var(--primary-color)' : 'var(--text-muted)',
+            fontWeight: activeTab === 'history' ? '600' : '500',
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Transaction History
+        </button>
+      </div>
+
+      {activeTab === 'balances' && reportData && (
+        <>
+          <div className="grid-cols-3" style={{ marginBottom: '1.5rem' }}>
+            <Card style={{ textAlign: 'center', background: 'var(--bg-main)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>You'll Get (Advance)</div>
+              <div style={{ color: 'var(--success)', fontSize: '1.25rem', fontWeight: 'bold' }}>
+                {formatCurrency(reportData.summary.totalYouWillGet)}
+              </div>
+            </Card>
+            <Card style={{ textAlign: 'center', background: 'var(--bg-main)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>You'll Give (Payable)</div>
+              <div style={{ color: 'var(--danger)', fontSize: '1.25rem', fontWeight: 'bold' }}>
+                {formatCurrency(reportData.summary.totalYouWillGive)}
+              </div>
+            </Card>
+            <Card style={{ textAlign: 'center', background: 'var(--bg-main)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Net Balance</div>
+              <div style={{ 
+                color: reportData.summary.netBalance > 0 ? 'var(--danger)' : reportData.summary.netBalance < 0 ? 'var(--success)' : 'var(--text-main)', 
+                fontSize: '1.25rem', 
+                fontWeight: 'bold' 
+              }}>
+                {formatCurrency(Math.abs(reportData.summary.netBalance))}
+                {reportData.summary.netBalance > 0 ? ' Dr' : reportData.summary.netBalance < 0 ? ' Cr' : ''}
+              </div>
+            </Card>
+          </div>
+
+          <Card noPadding>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', background: 'var(--bg-main)' }}>
+                    <th style={{ padding: '1rem' }}>Name</th>
+                    <th style={{ padding: '1rem' }}>Details</th>
+                    <th style={{ padding: '1rem', textAlign: 'right', background: 'rgba(40, 167, 69, 0.05)' }}>You'll Get</th>
+                    <th style={{ padding: '1rem', textAlign: 'right', background: 'rgba(220, 53, 69, 0.05)' }}>You'll Give</th>
+                    <th style={{ padding: '1rem', textAlign: 'center' }}>Last Activity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportData.parties.map(party => (
+                    <tr key={party.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '1rem', fontWeight: '500' }}>{party.name}</td>
+                      <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{party.type}</td>
+                      <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--success)', background: 'rgba(40, 167, 69, 0.02)' }}>
+                        {party.balance < 0 ? formatCurrency(Math.abs(party.balance)) : '-'}
+                      </td>
+                      <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--danger)', background: 'rgba(220, 53, 69, 0.02)' }}>
+                        {party.balance > 0 ? formatCurrency(party.balance) : '-'}
+                      </td>
+                      <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        {party.lastActivityDate ? new Date(party.lastActivityDate).toLocaleDateString() : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                  {reportData.parties.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
+                        No parties found for this site.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {activeTab === 'history' && (
+        <Card noPadding>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left', background: 'var(--bg-main)' }}>
+                  <th style={{ padding: '1rem' }}>Date</th>
+                  <th style={{ padding: '1rem' }}>Type</th>
+                  <th style={{ padding: '1rem' }}>Paid To</th>
+                  <th style={{ padding: '1rem' }}>Amount</th>
+                  <th style={{ padding: '1rem' }}>Mode</th>
                 </tr>
-              ))}
-              {payments.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
-                    No payment records found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody>
+                {payments.map(payment => (
+                  <tr key={payment._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '1rem' }}>{new Date(payment.paymentDate).toLocaleDateString()}</td>
+                    <td style={{ padding: '1rem', textTransform: 'capitalize' }}>
+                      <Badge variant={payment.type === 'labour' ? 'warning' : 'info'}>
+                        {payment.type}
+                      </Badge>
+                    </td>
+                    <td style={{ padding: '1rem', fontWeight: '500' }}>{payment.referenceName || 'Unknown'}</td>
+                    <td style={{ padding: '1rem', color: 'var(--success)', fontWeight: 'bold' }}>
+                      {formatCurrency(payment.amount)}
+                    </td>
+                    <td style={{ padding: '1rem', textTransform: 'capitalize' }}>
+                      {payment.paymentMode.replace('_', ' ')}
+                      {payment.transactionId && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Txn: {payment.transactionId}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {payments.length === 0 && (
+                  <tr>
+                    <td colSpan="5" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
+                      No payment records found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
       
       <Modal 
         isOpen={isModalOpen} 
