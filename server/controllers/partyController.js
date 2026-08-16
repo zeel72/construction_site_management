@@ -171,6 +171,7 @@ exports.addParty = async (req, res, next) => {
     if (req.body.openingBalance && Number(req.body.openingBalance) > 0) {
       await PartyTransaction.create({
         partyId: party._id,
+        userId: req.user.id,
         amount: Number(req.body.openingBalance),
         type: req.body.openingBalanceType || 'give',
         description: 'Opening Balance',
