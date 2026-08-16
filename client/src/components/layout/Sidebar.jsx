@@ -16,8 +16,7 @@ const Sidebar = ({ siteId, onClose }) => {
   const siteLinks = siteId ? [
     { to: `/sites/${siteId}`, icon: <FiMap />, label: 'Site Overview', end: true },
     { to: `/sites/${siteId}/labours`, icon: <FiUsers />, label: 'Labours & Attendance' },
-    { to: `/sites/${siteId}/materials`, icon: <FiBox />, label: 'Materials' },
-    { to: `/sites/${siteId}/bills`, icon: <FiFileText />, label: 'Material Bills (GST)' },
+    { to: `/sites/${siteId}/bills`, icon: <FiBox />, label: 'Materials & Bills' },
     { to: `/sites/${siteId}/payments`, icon: <FiDollarSign />, label: 'Payments' },
   ] : [];
 

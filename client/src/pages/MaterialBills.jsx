@@ -9,9 +9,11 @@ import Badge from '../components/common/Badge';
 import Modal from '../components/common/Modal';
 import Input from '../components/common/Input';
 import AttachmentSection from '../components/common/AttachmentSection';
+import Materials from './Materials';
 
 const MaterialBills = () => {
   const { siteId } = useParams();
+  const [activeTab, setActiveTab] = useState('bills');
   const [bills, setBills] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -168,12 +170,49 @@ const MaterialBills = () => {
 
   return (
     <div>
-      <div className="flex-between" style={{ marginBottom: '2rem' }}>
-        <h2>Material Bills (GST)</h2>
-        <Button onClick={openAddModal}>Add New Bill</Button>
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => setActiveTab('bills')}
+          style={{
+            padding: '0.75rem 1rem',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'bills' ? '2px solid var(--primary-color)' : '2px solid transparent',
+            color: activeTab === 'bills' ? 'var(--primary-color)' : 'var(--text-muted)',
+            fontWeight: activeTab === 'bills' ? '600' : '500',
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Supplier Bills (Invoices)
+        </button>
+        <button
+          onClick={() => setActiveTab('inventory')}
+          style={{
+            padding: '0.75rem 1rem',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'inventory' ? '2px solid var(--primary-color)' : '2px solid transparent',
+            color: activeTab === 'inventory' ? 'var(--primary-color)' : 'var(--text-muted)',
+            fontWeight: activeTab === 'inventory' ? '600' : '500',
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Inventory Items (Direct)
+        </button>
       </div>
 
-      <Card noPadding>
+      {activeTab === 'inventory' && <Materials />}
+
+      {activeTab === 'bills' && (
+        <>
+          <div className="flex-between" style={{ marginBottom: '2rem' }}>
+            <h2>Material Bills (GST)</h2>
+            <Button onClick={openAddModal}>Add New Bill</Button>
+          </div>
+
+          <Card noPadding>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -284,6 +323,9 @@ const MaterialBills = () => {
           </div>
         </form>
       </Modal>
+      
+      </>
+      )}
 
       <style>{`
         .hover-row:hover { background-color: var(--primary-light); }
