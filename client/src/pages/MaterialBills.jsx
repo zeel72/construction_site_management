@@ -30,7 +30,7 @@ const MaterialBills = () => {
     itemName: '',
     quantity: '',
     unit: 'bags',
-    ratePerUnit: '',
+    totalAmount: '',
     gstRate: '18',
     isInterState: false
   });
@@ -79,7 +79,7 @@ const MaterialBills = () => {
       itemName: item.name || '',
       quantity: item.quantity || '',
       unit: item.unit || 'bags',
-      ratePerUnit: item.ratePerUnit || '',
+      totalAmount: (item.quantity && item.ratePerUnit) ? (item.quantity * item.ratePerUnit).toFixed(2) : '',
       gstRate: item.gstRate ? item.gstRate.toString() : '18',
       isInterState: bill.gstBreakup ? bill.gstBreakup.isInterState : false
     });
@@ -96,7 +96,7 @@ const MaterialBills = () => {
       itemName: '',
       quantity: '',
       unit: 'bags',
-      ratePerUnit: '',
+      totalAmount: '',
       gstRate: '18',
       isInterState: false
     });
@@ -105,12 +105,14 @@ const MaterialBills = () => {
 
   const handleSaveBill = async (e) => {
     e.preventDefault();
-    if (!formData.billNumber || !formData.supplierId || !formData.itemName || !formData.quantity || !formData.ratePerUnit) {
+    if (!formData.billNumber || !formData.supplierId || !formData.itemName || !formData.quantity || !formData.totalAmount) {
       return toast.error('Please fill in all required fields');
     }
 
     setSubmitting(true);
     try {
+      const rate = Number(formData.totalAmount) / Number(formData.quantity);
+      
       const payload = {
         billNumber: formData.billNumber,
         supplierId: formData.supplierId,
@@ -121,7 +123,7 @@ const MaterialBills = () => {
             name: formData.itemName,
             quantity: Number(formData.quantity),
             unit: formData.unit,
-            ratePerUnit: Number(formData.ratePerUnit),
+            ratePerUnit: rate,
             gstRate: Number(formData.gstRate)
           }
         ]
@@ -142,7 +144,7 @@ const MaterialBills = () => {
         billNumber: '',
         itemName: '',
         quantity: '',
-        ratePerUnit: ''
+        totalAmount: ''
       });
       fetchBills();
     } catch (error) {
@@ -155,15 +157,6 @@ const MaterialBills = () => {
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'paid': return 'success';
-      case 'partially_paid': return 'warning';
-      case 'pending': return 'danger';
-      default: return 'secondary';
-    }
   };
 
   if (loading) return <Spinner />;
@@ -222,6 +215,7 @@ const MaterialBills = () => {
                 <th style={{ padding: '1rem' }}>Date</th>
                 <th style={{ padding: '1rem' }}>GST %</th>
                 <th style={{ padding: '1rem' }}>Total Amount</th>
+                <th style={{ padding: '1rem' }}>Due</th>
                 <th style={{ padding: '1rem' }}>Paid</th>
                 <th style={{ padding: '1rem' }}>Actions</th>
               </tr>
@@ -242,12 +236,10 @@ const MaterialBills = () => {
                       Taxable: {formatCurrency(bill.taxableAmount)}
                     </div>
                   </td>
+                  <td style={{ padding: '1rem', color: 'var(--danger)' }}>{formatCurrency(bill.balanceAmount || bill.finalAmount - bill.paidAmount)}</td>
                   <td style={{ padding: '1rem', color: 'var(--success)' }}>{formatCurrency(bill.paidAmount)}</td>
                   <td style={{ padding: '1rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <Badge variant={getStatusColor(bill.status)}>
-                        {bill.status.replace('_', ' ')}
-                      </Badge>
                       <AttachmentSection entityType="bill" entityId={bill._id} compact />
                       <Button variant="ghost" size="sm" onClick={() => handleEditClick(bill)}>Edit</Button>
                     </div>
@@ -312,7 +304,7 @@ const MaterialBills = () => {
           </div>
 
           <div className="grid-cols-2">
-            <Input label="Rate Per Unit (₹)" id="ratePerUnit" type="number" min="0" step="0.01" value={formData.ratePerUnit} onChange={handleInputChange} required />
+            <Input label="Total Amount (₹)" id="totalAmount" type="number" min="0" step="0.01" value={formData.totalAmount} onChange={handleInputChange} required />
             <Input label="GST Rate (%)" id="gstRate" type="select" value={formData.gstRate} onChange={handleInputChange}>
               <option value="0">0%</option>
               <option value="5">5%</option>
