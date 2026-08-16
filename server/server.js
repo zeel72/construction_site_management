@@ -136,7 +136,7 @@ startServer().catch((err) => {
 // ============================================
 // Keep-Alive Self-Ping (Render Free Tier)
 // ============================================
-// Pings the /api/health endpoint every 14 minutes to prevent the server from sleeping.
+// Pings the /api/health endpoint every 5 hours to prevent the server from sleeping.
 setInterval(() => {
   const url = process.env.RENDER_EXTERNAL_URL;
   if (url) {
@@ -148,6 +148,6 @@ setInterval(() => {
       console.error(`[Keep-Alive] Failed to ping:`, err.message);
     });
   }
-}, 14 * 60 * 1000); // 14 minutes
+}, 5 * 60 * 60 * 1000); // 5 hours
 
 module.exports = app;
