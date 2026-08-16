@@ -21,10 +21,11 @@ const Parties = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    partyType: 'customer',
     isInterestActive: false,
     interestRate: 0,
-    interestType: 'monthly'
+    interestType: 'monthly',
+    openingBalance: '',
+    openingBalanceType: 'give'
   });
 
   useEffect(() => {
@@ -58,7 +59,16 @@ const Parties = () => {
       await api.post('/parties', formData);
       toast.success('Party added successfully');
       setIsModalOpen(false);
-      setFormData({ name: '', phone: '', partyType: 'customer', isInterestActive: false, interestRate: 0, interestType: 'monthly' });
+      setFormData({
+        name: '',
+        phone: '',
+        partyType: 'customer',
+        isInterestActive: false,
+        interestRate: 0,
+        interestType: 'monthly',
+        openingBalance: '',
+        openingBalanceType: 'give'
+      });
       fetchParties();
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to add party');
@@ -187,6 +197,14 @@ const Parties = () => {
             <option value="borrower">Borrower (Pays Interest)</option>
             <option value="other">Other</option>
           </Input>
+          
+          <div className="grid-cols-2">
+            <Input label="Opening Balance (₹) (Optional)" id="openingBalance" type="number" step="0.01" min="0" value={formData.openingBalance} onChange={handleInputChange} />
+            <Input label="Balance Type" id="openingBalanceType" type="select" value={formData.openingBalanceType} onChange={handleInputChange}>
+              <option value="give">I Owe Them (You'll Give)</option>
+              <option value="get">They Owe Me (You'll Get)</option>
+            </Input>
+          </div>
           
           <div style={{ padding: '1rem', background: 'var(--bg-main)', borderRadius: 'var(--radius-md)' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, cursor: 'pointer' }}>

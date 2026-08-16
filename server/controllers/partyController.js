@@ -167,6 +167,17 @@ exports.addParty = async (req, res, next) => {
       ...req.body,
       userId: req.user.id
     });
+
+    if (req.body.openingBalance && Number(req.body.openingBalance) > 0) {
+      await PartyTransaction.create({
+        partyId: party._id,
+        amount: Number(req.body.openingBalance),
+        type: req.body.openingBalanceType || 'give',
+        description: 'Opening Balance',
+        date: new Date()
+      });
+    }
+
     res.status(201).json({ success: true, data: party });
   } catch (error) {
     next(error);
