@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Generate a Khatabook-style Financial PDF Report
@@ -126,7 +126,7 @@ export const generateFinancialReportPDF = (reportData, siteName) => {
     ];
   });
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: boxY + boxHeight + 30,
     head: [['Name', 'Details', "You'll Get", "You'll Give", 'Last Activity']],
     body: tableData,
