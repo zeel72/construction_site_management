@@ -31,6 +31,7 @@ const MaterialBills = () => {
     quantity: '',
     unit: 'bags',
     totalAmount: '',
+    paidAmount: '',
     gstRate: '18',
     isInterState: false
   });
@@ -80,6 +81,7 @@ const MaterialBills = () => {
       quantity: item.quantity || '',
       unit: item.unit || 'bags',
       totalAmount: (item.quantity && item.ratePerUnit) ? (item.quantity * item.ratePerUnit).toFixed(2) : '',
+      paidAmount: bill.paidAmount || '',
       gstRate: item.gstRate ? item.gstRate.toString() : '18',
       isInterState: bill.gstBreakup ? bill.gstBreakup.isInterState : false
     });
@@ -97,6 +99,7 @@ const MaterialBills = () => {
       quantity: '',
       unit: 'bags',
       totalAmount: '',
+      paidAmount: '',
       gstRate: '18',
       isInterState: false
     });
@@ -126,7 +129,8 @@ const MaterialBills = () => {
             ratePerUnit: rate,
             gstRate: Number(formData.gstRate)
           }
-        ]
+        ],
+        paidAmount: Number(formData.paidAmount || 0)
       };
 
       if (isEditMode) {
@@ -144,7 +148,8 @@ const MaterialBills = () => {
         billNumber: '',
         itemName: '',
         quantity: '',
-        totalAmount: ''
+        totalAmount: '',
+        paidAmount: ''
       });
       fetchBills();
     } catch (error) {
@@ -305,6 +310,9 @@ const MaterialBills = () => {
 
           <div className="grid-cols-2">
             <Input label="Total Amount (₹)" id="totalAmount" type="number" min="0" step="0.01" value={formData.totalAmount} onChange={handleInputChange} required />
+            <Input label="Paid Amount (₹) (Optional)" id="paidAmount" type="number" min="0" step="0.01" value={formData.paidAmount} onChange={handleInputChange} />
+          </div>
+          <div className="grid-cols-2">
             <Input label="GST Rate (%)" id="gstRate" type="select" value={formData.gstRate} onChange={handleInputChange}>
               <option value="0">0%</option>
               <option value="5">5%</option>

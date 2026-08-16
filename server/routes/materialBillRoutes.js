@@ -18,9 +18,10 @@ router
     [
       body('billNumber').notEmpty().withMessage('Bill number is required'),
       body('supplierId').notEmpty().withMessage('Supplier ID is required'),
-      body('billDate').isISO8601().toDate(),
-      body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
-      body('gstBreakup.isInterState').isBoolean(),
+      body('billDate').optional().isISO8601().toDate(),
+      body('items').optional().isArray({ min: 1 }).withMessage('At least one item is required'),
+      body('gstBreakup.isInterState').optional().isBoolean(),
+      body('paidAmount').optional().isNumeric(),
     ],
     validate,
     createBill
