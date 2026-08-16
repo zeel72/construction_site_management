@@ -18,9 +18,13 @@ const Parties = () => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editPartyId, setEditPartyId] = useState(null);
+  
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    partyType: 'customer',
     isInterestActive: false,
     interestRate: 0,
     interestType: 'monthly',
@@ -50,14 +54,19 @@ const Parties = () => {
     setFormData({ ...formData, [id]: type === 'checkbox' ? checked : value });
   };
 
-  const handleAddParty = async (e) => {
+  const handleSaveParty = async (e) => {
     e.preventDefault();
     if (!formData.name) return toast.error('Name is required');
 
     setSubmitting(true);
     try {
-      await api.post('/parties', formData);
-      toast.success('Party added successfully');
+      if (isEditMode) {
+        await api.put(`/parties/${editPartyId}`, formData);
+        toast.success('Ledger updated successfully');
+      } else {
+        await api.post('/parties', formData);
+        toast.success('Ledger added successfully');
+      }
       setIsModalOpen(false);
       setFormData({
         name: '',
@@ -71,10 +80,43 @@ const Parties = () => {
       });
       fetchParties();
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to add party');
+      toast.error(error.response?.data?.error || 'Failed to save ledger');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEditClick = (e, party) => {
+    e.stopPropagation(); // prevent row click
+    setIsEditMode(true);
+    setEditPartyId(party._id);
+    setFormData({
+      name: party.name || '',
+      phone: party.phone || '',
+      partyType: party.partyType || 'customer',
+      isInterestActive: party.isInterestActive || false,
+      interestRate: party.interestRate || 0,
+      interestType: party.interestType || 'monthly',
+      openingBalance: '', // Do not edit opening balance directly from here to prevent double-entry issues
+      openingBalanceType: 'give'
+    });
+    setIsModalOpen(true);
+  };
+  
+  const handleAddClick = () => {
+    setIsEditMode(false);
+    setEditPartyId(null);
+    setFormData({
+      name: '',
+      phone: '',
+      partyType: 'customer',
+      isInterestActive: false,
+      interestRate: 0,
+      interestType: 'monthly',
+      openingBalance: '',
+      openingBalanceType: 'give'
+    });
+    setIsModalOpen(true);
   };
 
   const formatCurrency = (amount) => {
@@ -87,7 +129,7 @@ const Parties = () => {
     <div>
       <div className="flex-between" style={{ marginBottom: '2rem' }}>
         <h2>Ledger (Khatabook)</h2>
-        <Button onClick={() => setIsModalOpen(true)}>+ Add Ledger</Button>
+        <Button onClick={handleAddClick}>+ Add Ledger</Button>
       </div>
 
       <div className="grid-cols-3" style={{ marginBottom: '2rem' }}>
@@ -116,6 +158,7 @@ const Parties = () => {
                 <th style={{ padding: '1rem' }}>Type & Details</th>
                 <th style={{ padding: '1rem', textAlign: 'right' }}>You'll Get</th>
                 <th style={{ padding: '1rem', textAlign: 'right' }}>You'll Give</th>
+                <th style={{ padding: '1rem', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -162,12 +205,15 @@ const Parties = () => {
                       </div>
                     ) : '-'}
                   </td>
+                  <td style={{ padding: '1rem', textAlign: 'center' }}>
+                    <Button variant="ghost" size="sm" onClick={(e) => handleEditClick(e, party)}>Edit</Button>
+                  </td>
                 </tr>
               ))}
               {parties.length === 0 && (
                 <tr>
-                  <td colSpan="4" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
-                    No parties added yet. Click "Add New Party" to start your ledger.
+                  <td colSpan="5" style={{ padding: '2rem', textAlign: 'center' }} className="text-muted">
+                    No ledgers added yet. Click "+ Add Ledger" to start.
                   </td>
                 </tr>
               )}
@@ -179,15 +225,15 @@ const Parties = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Add Ledger"
+        title={isEditMode ? "Edit Ledger" : "Add Ledger"}
         footer={
           <>
             <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddParty} isLoading={submitting}>Save Ledger</Button>
+            <Button onClick={handleSaveParty} isLoading={submitting}>{isEditMode ? "Save Changes" : "Save Ledger"}</Button>
           </>
         }
       >
-        <form onSubmit={handleAddParty} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleSaveParty} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <Input label="Name" id="name" value={formData.name} onChange={handleInputChange} required />
           <Input label="Phone (Optional)" id="phone" value={formData.phone} onChange={handleInputChange} />
           <Input label="Type" id="partyType" type="select" value={formData.partyType} onChange={handleInputChange}>
@@ -198,13 +244,15 @@ const Parties = () => {
             <option value="other">Other</option>
           </Input>
           
-          <div className="grid-cols-2">
-            <Input label="Opening Balance (₹) (Optional)" id="openingBalance" type="number" step="0.01" min="0" value={formData.openingBalance} onChange={handleInputChange} />
-            <Input label="Balance Type" id="openingBalanceType" type="select" value={formData.openingBalanceType} onChange={handleInputChange}>
-              <option value="give">I Owe Them (You'll Give)</option>
-              <option value="get">They Owe Me (You'll Get)</option>
-            </Input>
-          </div>
+          {!isEditMode && (
+            <div className="grid-cols-2">
+              <Input label="Opening Balance (₹) (Optional)" id="openingBalance" type="number" step="0.01" min="0" value={formData.openingBalance} onChange={handleInputChange} />
+              <Input label="Balance Type" id="openingBalanceType" type="select" value={formData.openingBalanceType} onChange={handleInputChange}>
+                <option value="give">I Owe Them (You'll Give)</option>
+                <option value="get">They Owe Me (You'll Get)</option>
+              </Input>
+            </div>
+          )}
           
           <div style={{ padding: '1rem', background: 'var(--bg-main)', borderRadius: 'var(--radius-md)' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, cursor: 'pointer' }}>
