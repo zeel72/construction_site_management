@@ -107,7 +107,7 @@ exports.getParties = async (req, res, next) => {
 
     for (let party of parties) {
       const transactions = await PartyTransaction.find({ partyId: party._id });
-      const { runningBalance } = calculateLedger(party, transactions);
+      const { runningBalance, totalAccruedInterest } = calculateLedger(party, transactions);
       
       if (runningBalance > 0) {
         totalYoullGet += runningBalance;
@@ -118,6 +118,7 @@ exports.getParties = async (req, res, next) => {
       result.push({
         ...party._doc,
         balance: runningBalance,
+        accruedInterest: totalAccruedInterest,
       });
     }
 

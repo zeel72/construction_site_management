@@ -77,7 +77,7 @@ const Parties = () => {
     <div>
       <div className="flex-between" style={{ marginBottom: '2rem' }}>
         <h2>Ledger (Khatabook)</h2>
-        <Button onClick={() => setIsModalOpen(true)}>+ Add New Party</Button>
+        <Button onClick={() => setIsModalOpen(true)}>+ Add Ledger</Button>
       </div>
 
       <div className="grid-cols-3" style={{ marginBottom: '2rem' }}>
@@ -128,11 +128,29 @@ const Parties = () => {
                       </Badge>
                     )}
                   </td>
-                  <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--success)', fontWeight: party.balance > 0 ? '600' : 'normal' }}>
-                    {party.balance > 0 ? formatCurrency(party.balance) : '-'}
+                  <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--success)' }}>
+                    {party.balance > 0 ? (
+                      <div>
+                        <div style={{ fontWeight: '600' }}>{formatCurrency(party.balance)}</div>
+                        {party.accruedInterest > 0 && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            + {formatCurrency(party.accruedInterest)} Interest
+                          </div>
+                        )}
+                      </div>
+                    ) : '-'}
                   </td>
-                  <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--danger)', fontWeight: party.balance < 0 ? '600' : 'normal' }}>
-                    {party.balance < 0 ? formatCurrency(party.balance) : '-'}
+                  <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--danger)' }}>
+                    {party.balance < 0 ? (
+                      <div>
+                        <div style={{ fontWeight: '600' }}>{formatCurrency(party.balance)}</div>
+                        {party.accruedInterest < 0 && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            + {formatCurrency(Math.abs(party.accruedInterest))} Interest
+                          </div>
+                        )}
+                      </div>
+                    ) : '-'}
                   </td>
                 </tr>
               ))}
@@ -151,11 +169,11 @@ const Parties = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Add New Party"
+        title="Add Ledger"
         footer={
           <>
             <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddParty} isLoading={submitting}>Save Party</Button>
+            <Button onClick={handleAddParty} isLoading={submitting}>Save Ledger</Button>
           </>
         }
       >
