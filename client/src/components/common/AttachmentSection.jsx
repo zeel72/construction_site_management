@@ -9,6 +9,7 @@ const AttachmentSection = ({ entityType, entityId, compact = false }) => {
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewType, setPreviewType] = useState(null);
@@ -71,17 +72,24 @@ const AttachmentSection = ({ entityType, entityId, compact = false }) => {
     }
   };
 
-  const handlePreview = (attachment) => {
-    const baseUrl = api.defaults.baseURL || '';
-    const url = `${baseUrl}/attachments/${attachment._id}/file`;
-    
-    if (attachment.fileType.startsWith('image/')) {
-      setPreviewType('image');
-      setPreviewUrl(url);
-    } else {
-      // For PDFs and other files, open in new tab
-      window.open(url, '_blank');
-      return;
+  const handlePreview = async (attachment) => {
+    try {
+      setDownloadingId(attachment._id);
+      const response = await api.get(`/attachments/${attachment._id}/file`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      
+      if (attachment.fileType.startsWith('image/')) {
+        setPreviewType('image');
+        setPreviewUrl(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch (error) {
+      toast.error('Failed to load attachment');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -195,8 +203,9 @@ const AttachmentSection = ({ entityType, entityId, compact = false }) => {
                 </div>
                 <button
                   onClick={() => handlePreview(att)}
-                  style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '0.25rem' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '0.25rem', opacity: downloadingId === att._id ? 0.5 : 1 }}
                   title="View / Download"
+                  disabled={downloadingId === att._id}
                 >
                   <FiDownload />
                 </button>
@@ -271,8 +280,9 @@ const AttachmentSection = ({ entityType, entityId, compact = false }) => {
             </div>
             <button
               onClick={() => handlePreview(att)}
-              style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '0.25rem' }}
+              style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '0.25rem', opacity: downloadingId === att._id ? 0.5 : 1 }}
               title="View / Download"
+              disabled={downloadingId === att._id}
             >
               <FiDownload />
             </button>

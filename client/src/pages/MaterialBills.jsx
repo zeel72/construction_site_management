@@ -18,6 +18,8 @@ const MaterialBills = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editBillId, setEditBillId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     billNumber: '',
@@ -61,7 +63,45 @@ const MaterialBills = () => {
     setFormData({ ...formData, [e.target.id]: value });
   };
 
-  const handleAddBill = async (e) => {
+  const handleEditClick = (bill) => {
+    setIsEditMode(true);
+    setEditBillId(bill._id);
+    
+    // Extract first item if exists
+    const item = bill.items && bill.items.length > 0 ? bill.items[0] : {};
+
+    setFormData({
+      billNumber: bill.billNumber,
+      supplierId: bill.supplierId,
+      billDate: new Date(bill.billDate).toISOString().split('T')[0],
+      itemName: item.name || '',
+      quantity: item.quantity || '',
+      unit: item.unit || 'bags',
+      ratePerUnit: item.ratePerUnit || '',
+      gstRate: item.gstRate ? item.gstRate.toString() : '18',
+      isInterState: bill.gstBreakup ? bill.gstBreakup.isInterState : false
+    });
+    setIsModalOpen(true);
+  };
+
+  const openAddModal = () => {
+    setIsEditMode(false);
+    setEditBillId(null);
+    setFormData({
+      billNumber: '',
+      supplierId: '',
+      billDate: new Date().toISOString().split('T')[0],
+      itemName: '',
+      quantity: '',
+      unit: 'bags',
+      ratePerUnit: '',
+      gstRate: '18',
+      isInterState: false
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSaveBill = async (e) => {
     e.preventDefault();
     if (!formData.billNumber || !formData.supplierId || !formData.itemName || !formData.quantity || !formData.ratePerUnit) {
       return toast.error('Please fill in all required fields');
@@ -85,8 +125,13 @@ const MaterialBills = () => {
         ]
       };
 
-      await api.post(`/sites/${siteId}/material-bills`, payload);
-      toast.success('Bill added successfully');
+      if (isEditMode) {
+        await api.put(`/sites/${siteId}/material-bills/${editBillId}`, payload);
+        toast.success('Bill updated successfully');
+      } else {
+        await api.post(`/sites/${siteId}/material-bills`, payload);
+        toast.success('Bill added successfully');
+      }
       setIsModalOpen(false);
       
       // Reset form
@@ -125,7 +170,7 @@ const MaterialBills = () => {
     <div>
       <div className="flex-between" style={{ marginBottom: '2rem' }}>
         <h2>Material Bills (GST)</h2>
-        <Button onClick={() => setIsModalOpen(true)}>Add New Bill</Button>
+        <Button onClick={openAddModal}>Add New Bill</Button>
       </div>
 
       <Card noPadding>
@@ -136,9 +181,10 @@ const MaterialBills = () => {
                 <th style={{ padding: '1rem' }}>Bill No.</th>
                 <th style={{ padding: '1rem' }}>Supplier</th>
                 <th style={{ padding: '1rem' }}>Date</th>
+                <th style={{ padding: '1rem' }}>GST %</th>
                 <th style={{ padding: '1rem' }}>Total Amount</th>
                 <th style={{ padding: '1rem' }}>Paid</th>
-                <th style={{ padding: '1rem' }}>Status</th>
+                <th style={{ padding: '1rem' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -150,6 +196,7 @@ const MaterialBills = () => {
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>GSTIN: {bill.supplierGstin || 'N/A'}</div>
                   </td>
                   <td style={{ padding: '1rem' }}>{new Date(bill.billDate).toLocaleDateString()}</td>
+                  <td style={{ padding: '1rem' }}>{bill.items && bill.items[0] ? bill.items[0].gstRate + '%' : 'N/A'}</td>
                   <td style={{ padding: '1rem' }}>
                     {formatCurrency(bill.finalAmount)}
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -163,6 +210,7 @@ const MaterialBills = () => {
                         {bill.status.replace('_', ' ')}
                       </Badge>
                       <AttachmentSection entityType="bill" entityId={bill._id} compact />
+                      <Button variant="ghost" size="sm" onClick={() => handleEditClick(bill)}>Edit</Button>
                     </div>
                   </td>
                 </tr>
@@ -182,15 +230,15 @@ const MaterialBills = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Add Material Bill (Simplified)"
+        title={isEditMode ? "Edit Material Bill" : "Add Material Bill"}
         footer={
           <>
             <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddBill} isLoading={submitting}>Create Bill</Button>
+            <Button onClick={handleSaveBill} isLoading={submitting}>{isEditMode ? "Save Changes" : "Create Bill"}</Button>
           </>
         }
       >
-        <form onSubmit={handleAddBill} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <form onSubmit={handleSaveBill} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <div className="grid-cols-2">
             <Input label="Bill Number" id="billNumber" value={formData.billNumber} onChange={handleInputChange} required />
             <Input label="Bill Date" id="billDate" type="date" value={formData.billDate} onChange={handleInputChange} required />

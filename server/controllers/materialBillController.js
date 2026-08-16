@@ -88,3 +88,46 @@ exports.createBill = async (req, res) => {
     data: bill,
   });
 };
+
+// @desc    Update a material bill
+// @route   PUT /api/sites/:siteId/material-bills/:id
+// @access  Private
+exports.updateBill = async (req, res) => {
+  let bill = await MaterialBill.findById(req.params.id);
+  if (!bill) {
+    return res.status(404).json({ success: false, error: 'Bill not found' });
+  }
+
+  if (req.body.supplierId && req.body.supplierId !== bill.supplierId.toString()) {
+    const supplier = await Supplier.findById(req.body.supplierId);
+    if (!supplier) return res.status(404).json({ success: false, error: 'Supplier not found' });
+    req.body.supplierName = supplier.name;
+    req.body.supplierGstin = supplier.gstin;
+  }
+
+  // Assign new values
+  Object.assign(bill, req.body);
+  await bill.save();
+
+  // Re-create material inventory records
+  await Material.deleteMany({ billId: bill._id });
+  const materials = bill.items.map((item) => ({
+    name: item.name,
+    category: 'other',
+    hsnCode: item.hsnCode,
+    quantity: item.quantity,
+    unit: item.unit,
+    ratePerUnit: item.ratePerUnit,
+    gstRate: item.gstRate,
+    supplierId: bill.supplierId,
+    supplierName: bill.supplierName,
+    billId: bill._id,
+    invoiceNumber: bill.billNumber,
+    receivedDate: bill.billDate,
+    siteId: req.params.siteId,
+    addedBy: req.user.id,
+  }));
+  await Material.insertMany(materials);
+
+  res.json({ success: true, data: bill });
+};

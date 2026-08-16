@@ -5,7 +5,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router({ mergeParams: true });
 
-const { getBills, getBill, createBill } = require('../controllers/materialBillController');
+const { getBills, getBill, createBill, updateBill } = require('../controllers/materialBillController');
 const protect = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
@@ -26,6 +26,6 @@ router
     createBill
   );
 
-router.route('/:id').get(getBill);
+router.route('/:id').get(getBill).put(validate, updateBill);
 
 module.exports = router;
